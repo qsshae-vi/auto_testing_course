@@ -41,5 +41,21 @@ public class TopicEditorOverlay { // в ДЗ№6 можно будет испо�
     public void publish() {
         publishButton.click();
     }
+
+    public void clearDraftIfNeeded() {
+        if (!textField.isVisible()) {
+            return;
+        }
+
+        if (!textField.innerText().isBlank()) {     // возвращает true, если строка имеет нулевую длину или содержит только пробелы, табуляции и переносы
+            textField.clear();
+        }
+    }
+
+    public void typeText(String text) {
+        textField.click();  // фокус - полю
+        textField.pressSequentially(text);  // иммитируем ввод прям с клавиатуры
+    }
+
 }
 
