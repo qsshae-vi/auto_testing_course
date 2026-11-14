@@ -3,6 +3,9 @@ package ru.ksu.pages;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
+import io.qameta.allure.Allure;
+import ru.ksu.components.DraftComponent;
+import ru.ksu.components.PostComponent;
 
 public final class GroupPage {
 
@@ -12,7 +15,6 @@ public final class GroupPage {
     private final Page page;
     private final Locator groupHeading;
     private final Locator topicLink;
-
 
     public GroupPage(Page page) {
         this.page = page;
@@ -31,6 +33,10 @@ public final class GroupPage {
         page.navigate(URL);
     }
 
+    public void reload() {
+        page.reload();
+    }
+
     public Locator getGroupHeading() {
         return groupHeading;
     }
@@ -39,7 +45,16 @@ public final class GroupPage {
         topicLink.click();
     }
 
-    public Locator getPostByText(String text) {
-        return page.getByText(text, new Page.GetByTextOptions().setExact(true));
+    public PostComponent getPost(String text) {
+
+        Locator postLocator = page.locator(".feed-w")
+                .filter(new Locator.FilterOptions()
+                        .setHasText(text));
+
+        return new PostComponent(postLocator);  // создаём и возвращаем публикацию
+    }
+
+    public DraftComponent getDraft() {
+        return new DraftComponent(page);   // создаём и возвращаем черновик
     }
 }
