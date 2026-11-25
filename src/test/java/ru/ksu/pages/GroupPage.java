@@ -3,11 +3,13 @@ package ru.ksu.pages;
 import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
-import io.qameta.allure.Allure;
 import ru.ksu.components.DraftComponent;
 import ru.ksu.components.PostComponent;
+import ru.ksu.core.LoadableComponent;
 
-public final class GroupPage {
+import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
+
+public final class GroupPage extends LoadableComponent { //<GroupPage> {
 
     public static final String URL =
             "https://ok.ru/group/70000060453292";
@@ -28,13 +30,27 @@ public final class GroupPage {
         );
     }
 
-    // методы взаимодействия со страницей
-    public void open() {
+    // LOADABLE COMPONENT
+    @Override
+    protected void load() {
         page.navigate(URL);
     }
 
+    @Override
+    protected boolean isLoaded() {
+        return page.url().contains(URL);
+    }
+
+    @Override
+    protected void waitUntilLoaded() {
+        assertThat(groupHeading).isVisible();
+    }
+
+
+    // Методы взаимодействия со страницей
     public void reload() {
-        page.reload();
+       load();
+       waitUntilLoaded();
     }
 
     public Locator getGroupHeading() {
@@ -47,11 +63,11 @@ public final class GroupPage {
 
     public PostComponent getPost(String text) {
 
-        Locator postLocator = page.locator(".feed-w")
+        Locator postLocator = page.locator("[data-feed-id]")
                 .filter(new Locator.FilterOptions()
                         .setHasText(text));
 
-        return new PostComponent(postLocator);  // создаём и возвращаем публикацию
+        return new PostComponent(postLocator);  // создаём и возвращаем публикацию (PAGE ELEMENT)
     }
 
     public DraftComponent getDraft() {

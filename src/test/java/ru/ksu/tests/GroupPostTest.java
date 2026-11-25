@@ -12,9 +12,9 @@ import static org.junit.jupiter.api.Assertions.assertAll;
 import io.qameta.allure.Allure;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
-import ru.ksu.components.DraftComponent;
+import org.junit.jupiter.params.provider.MethodSource;
 import ru.ksu.components.TopicEditorOverlay;
+import ru.ksu.flows.DraftFlow;
 import ru.ksu.pages.GroupPage;
 
 import java.nio.file.Paths;
@@ -42,17 +42,19 @@ public class GroupPostTest {
     private Page page;
     private GroupPage groupPage;
     private TopicEditorOverlay editor;
-    private DraftComponent draft;
+
+    private DraftFlow draftFlow;
 
     // Подготовка для всех(каждого) тестов
     @BeforeEach
     void openGroup(Page page) {
         this.page = page;   // задаём  в качестве поля класса - параметр
         groupPage = new GroupPage(page);
-        draft = groupPage.getDraft();
+
+        draftFlow = new DraftFlow(page);
 
         Allure.step("Открыть страницу группы", () ->
-                groupPage.open()
+                groupPage.get()     // Loadable Component
         );
     }
 
@@ -85,8 +87,8 @@ public class GroupPostTest {
         void openEditor() {
             editor = new TopicEditorOverlay(page);
 
-            Allure.step("Очищаем черновик поста, если не пустой", () ->
-                    clearDraftIfNeeded());
+            Allure.step("Очистить черновик, если не пустой",
+                    () -> draftFlow.clearIfNeeded());
 
             Allure.step("Открыть редактор новой темы", () ->
                     groupPage.openTopicEditor()
@@ -109,11 +111,7 @@ public class GroupPostTest {
 
         // Тест №3
         @ParameterizedTest(name = "Ввод текста: {0}")
-        @ValueSource(strings = {
-                "Начало",
-                "Текст с цифрами 123",
-                "Текст с символами !?%^&#@+-"
-        })
+        @MethodSource("ru.ksu.data.TopicTextDataProvider#topicTexts")   // DATA PROVIDER
         @DisplayName("Ввод текста в поле редактора")
         void fillTextInEditor(String fillingText) {
 
@@ -160,20 +158,5 @@ public class GroupPostTest {
             Allure.step("Проверить недоступность публикования пустой темы", () ->
                     assertThat(editor.getPublishButton()).isDisabled());
         }
-    }
-
-    private void clearDraftIfNeeded() {     // Исключу дублирование этих методов в классах в Лабораторной работе №6
-        if (editor.isOpen()) {  // Редактор открыт
-            Allure.step("Закрыть редактор", () -> editor.closeEditor());
-        }
-
-        if (!draft.isExists()) {
-            Allure.step("Черновик отсутствует - очистка не требуется");
-            return;
-        }
-
-        Allure.step("Открываем имеющийся черновик", () -> draft.open());
-        Allure.step("Удалить сохранённый черновик", () -> editor.clearDraft());
-        Allure.step("Закрыть редактор", () -> editor.closeEditor());
     }
 }

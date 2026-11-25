@@ -4,38 +4,41 @@ import com.microsoft.playwright.Page;
 import com.microsoft.playwright.junit.UsePlaywright;
 import io.qameta.allure.Allure;
 import org.junit.jupiter.api.*;
-import ru.ksu.components.DraftComponent;
+import ru.ksu.flows.DraftFlow;
+import ru.ksu.model.TopicText;
 import ru.ksu.components.PostComponent;
 import ru.ksu.components.TopicEditorOverlay;
 import ru.ksu.pages.GroupPage;
 
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 
 @UsePlaywright(ru.ksu.tests.GroupPostTest.TestOptions.class)
 // используем определённую в первом (по порядку создания) классе конфигурацию
-public class TopicPublishingTest {  // Можно будет расширить в сторону тестирования публикации вложений
+public class TopicPublishingTest {
 
     private GroupPage groupPage;
     private TopicEditorOverlay editor;
     private PostComponent post;
-    private DraftComponent draft;
+
+    private DraftFlow draftFlow;
 
     @BeforeEach
     void openGroup(Page page) {
         groupPage = new GroupPage(page);
 
         editor = new TopicEditorOverlay(page);
-        draft = groupPage.getDraft();
+
+        draftFlow = new DraftFlow(page);
+
 
         Allure.step("Открыть страницу группы", () ->
-                groupPage.open()
+                groupPage.get()
         );
 
-        Allure.step("Очищаем черновик поста, если не пустой",
-                () -> clearDraftIfNeeded());
+        Allure.step("Очистить черновик, если не пустой",
+                () -> draftFlow.clearIfNeeded());
 
         Allure.step("Открыть редактор новой темы", () ->
                 groupPage.openTopicEditor()
@@ -50,10 +53,8 @@ public class TopicPublishingTest {  // Можно будет расширить 
                         () -> post.deletePost());
             }
         } finally {
-            DraftComponent draft = groupPage.getDraft();
-
-            Allure.step("Очищаем черновик поста, если не пустой",
-                    () -> clearDraftIfNeeded());
+            Allure.step("Очистить черновик, если не пустой",
+                    () -> draftFlow.clearIfNeeded());
         }
     }
 
@@ -63,25 +64,25 @@ public class TopicPublishingTest {  // Можно будет расширить 
     @DisplayName("Публикация текстовой темы в группе")
     void shouldPublishTextTopic(Page page) {
 
-        String topicText = "Автотест " + UUID.randomUUID();     // так как необходима проверка появления поста в ленте
+        //String topicText = "Автотест " + UUID.randomUUID();     // так как необходима проверка появления поста в ленте
+        TopicText topic = TopicText.random();   // VALUE OBJECT + фабричный метод
 
         Allure.step("Ввести текст публикации", () ->
-                editor.typeText(topicText)
+                editor.typeText(topic.text())
         );
 
         Allure.step("Проверить доступность кнопки публикации", () ->
                 assertThat(editor.getPublishButton()).isEnabled()
         );
 
-        Allure.step("Опубликовать тему",
-                () -> editor.publish());
-
-        Allure.step("Обновить страницу группы", () ->
-                groupPage.open()
+        Allure.step("Опубликовать тему", () ->
+                editor.publish()
         );
 
+        Allure.step("Обновить страницу группы", () -> groupPage.reload());
+
         // конкретный опубликованный пост
-        post = groupPage.getPost(topicText);
+        post = groupPage.getPost(topic.text());
 
         Allure.step("Проверить появление опубликованного поста", () ->
                 assertThat(post.getRoot()).hasCount(1)
@@ -95,22 +96,7 @@ public class TopicPublishingTest {  // Можно будет расширить 
     @Test
     @Disabled("Вспомогательный тест очистки черновика")
     void shouldDeleteDraft(Page page) {
-        Allure.step("Удалить черновик",
-                () -> clearDraftIfNeeded());
-    }
-
-    private void clearDraftIfNeeded() {
-        if (editor.isOpen()) {  // Редактор открыт
-            Allure.step("Закрыть редактор", () -> editor.closeEditor());
-        }
-
-        if (!draft.isExists()) {
-            Allure.step("Черновик отсутствует - очистка не требуется");
-            return;
-        }
-
-        Allure.step("Открываем имеющийся черновик", () -> draft.open());
-        Allure.step("Удалить сохранённый черновик", () -> editor.clearDraft());
-        Allure.step("Закрыть редактор", () -> editor.closeEditor());
+        Allure.step("Очистить черновик, если не пустой",
+                () -> draftFlow.clearIfNeeded());
     }
 }
