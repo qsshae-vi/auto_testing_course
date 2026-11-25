@@ -4,21 +4,24 @@ import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 
-import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
-
 public final class PostComponent {  // PAGE ELEMENT
 
     private final Page page;
     private final Locator root;
     private final Locator menuTrigger;
+    private final Locator deleteTopicBtn;
+    private final Locator confirmDeleteBtn;
 
     public PostComponent(Locator root) {    // root - контейнер конкретного поста
         this.root = root;
         this.page = root.page();
         this.menuTrigger = root.getByRole(
                 AriaRole.BUTTON,
-                new Locator.GetByRoleOptions().setName("Меню")  // Кнопка с тремя точками
-        );
+                new Locator.GetByRoleOptions().setName("Меню"));  // Кнопка с тремя точками
+        this.deleteTopicBtn = page.getByText("Удалить тему", new Page.GetByTextOptions().setExact(true));
+
+        // кнопка подтверждения «Удалить тему» внутри появившейся заглушки
+        this.confirmDeleteBtn = root.locator(".delete-stub a.form-actions_yes");
     }
 
     public Locator getRoot() {
@@ -30,12 +33,9 @@ public final class PostComponent {  // PAGE ELEMENT
         menuTrigger.click();
 
         // «Удалить тему» из меню
-        page.getByText("Удалить тему", new Page.GetByTextOptions().setExact(true))
-                .locator("visible=true")
-                .click();
+        deleteTopicBtn.click();
 
-        // кнопка подтверждения «Удалить тему» внутри появившейся заглушки
-        Locator confirmDeleteBtn = page.locator(".delete-stub a.form-actions_yes").locator("visible=true");
+        // подтвердить удаление темы
         confirmDeleteBtn.click();
     }
 }

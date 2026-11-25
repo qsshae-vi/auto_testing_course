@@ -22,18 +22,26 @@ public class TopicEditorOverlay {
     public TopicEditorOverlay(Page page) {
         this.page = page;
 
-        this.textPlaceholder = page.locator(".posting_itx-w").getByText("Введите текст");   // ограничиваем поиск областью страницы
-        this.textField = page.locator("section[aria-label='Текст']").getByRole(AriaRole.TEXTBOX);
-        this.publishButton = page.getByRole(
-                AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Поделиться")).and(page.locator(".posting_submit"));
-        this.closeButton = page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("Закрыть"));
+        this.editorDialog = page.getByRole(
+                AriaRole.DIALOG
+        ).and(page.locator("[id='mtLayer']"));
+
+        this.textPlaceholder = page.getByRole(
+                AriaRole.DIALOG,
+                new Page.GetByRoleOptions().setName("Леер публикации темы в группу")
+        );
+
+        this.textField = editorDialog.locator("section[aria-label='Текст']").getByRole(AriaRole.TEXTBOX);
+
+        this.publishButton = editorDialog.getByRole(
+                AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Поделиться")).and(page.locator(".posting_submit"));
+
+        this.closeButton = editorDialog.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Закрыть"));
+
         this.deleteDraft = page.getByRole(
                 AriaRole.BUTTON,
                 new Page.GetByRoleOptions().setName("Удалить черновик")
         ).and(page.locator("button[data-action='clearDraft']"));
-        this.editorDialog = page.getByRole(
-                AriaRole.DIALOG
-        ).and(page.locator("#mtLayer"));
     }
 
     public Locator getTextPlaceholder() {
