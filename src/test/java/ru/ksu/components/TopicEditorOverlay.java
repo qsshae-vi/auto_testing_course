@@ -1,0 +1,89 @@
+package ru.ksu.components;
+
+import com.microsoft.playwright.Locator;
+import com.microsoft.playwright.Page;
+import com.microsoft.playwright.options.AriaRole;
+import ru.ksu.pages.GroupPage;
+
+import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
+
+public class TopicEditorOverlay {
+
+    private final Page page;
+
+    private final Locator textPlaceholder;
+    private final Locator textField;
+    private final Locator publishButton;
+    private final Locator closeButton;
+    private final Locator deleteDraft;
+    private final Locator editorDialog;
+
+
+    public TopicEditorOverlay(Page page) {
+        this.page = page;
+
+        this.editorDialog = page.getByRole(
+                AriaRole.DIALOG
+        ).and(page.locator("[id='mtLayer']"));
+
+        this.textPlaceholder = page.getByRole(
+                AriaRole.DIALOG,
+                new Page.GetByRoleOptions().setName("Леер публикации темы в группу")
+        );
+
+        this.textField = editorDialog.locator("section[aria-label='Текст']").getByRole(AriaRole.TEXTBOX);
+
+        this.publishButton = editorDialog.getByRole(
+                AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Поделиться")).and(page.locator(".posting_submit"));
+
+        this.closeButton = editorDialog.getByRole(AriaRole.BUTTON, new Locator.GetByRoleOptions().setName("Закрыть"));
+
+        this.deleteDraft = page.getByRole(
+                AriaRole.BUTTON,
+                new Page.GetByRoleOptions().setName("Удалить черновик")
+        ).and(page.locator("button[data-action='clearDraft']"));
+    }
+
+    public Locator getTextPlaceholder() {
+        return textPlaceholder;
+    }
+
+    public Locator getTextField() {
+        return textField;
+    }
+
+    public Locator getPublishButton() {
+        return publishButton;
+    }
+
+    public void fillText(String text) {
+        textField.fill(text);
+    }
+
+    public void clearText() {
+        textField.clear();
+    }
+
+    public void publish() {
+        publishButton.click();
+    }
+
+    public void typeText(String text) {
+        textField.click();  // фокус - полю
+        textField.pressSequentially(text);  // иммитируем ввод прям с клавиатуры
+    }
+
+    public boolean isOpen() {
+        return editorDialog.isVisible();
+    }
+
+    public void closeEditor() {
+        closeButton.click();
+    }
+
+    public TopicEditorOverlay clearDraft() {
+        deleteDraft.click();
+        return this;
+    }
+}
+
